@@ -187,44 +187,6 @@ void Steps_STPE_Init(void)
  }
 
 
-
-// void TIM2_Init(void)
-// {
-// 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-//   TIM_OCInitTypeDef  TIM_OCInitStructure;
-
-//   RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);    //使能定时器4时钟
-
-//  	//初始化TIMx
-//   TIM_TimeBaseStructure.TIM_Period = 9999; //设置在下一个更新事件装入活动的自动重装载寄存器周期的值
-//   TIM_TimeBaseStructure.TIM_Prescaler = 71; //设置用来作为TIMx时钟频率除数的预分频值 
-//   TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
-//   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
-//   TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
-	
-
-//   //初始化TIMx Channel_x PWM模式     
-//   TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //选择定时器模式:TIM脉冲宽度调制模式1
-//   //TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
-//   TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable; //关闭比较输出使能
-//   TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //输出极性:TIM输出比较极性高
-//   //TIM_OCInitStructure.TIM_Pulse =(STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC) + 1)*STEP_DUTY_CYCLE/100;
-
-  
-
-// 	TIM_OC4Init(TIM2, &TIM_OCInitStructure);	//根据T指定的参数初始化外设TIMx OC1;
-// 		// 这里设置了TIM_Pulse值，设置待装入捕获比较寄存器的脉冲值
-// 	TIM_OC4PreloadConfig(TIM2, TIM_OCPreload_Enable); //使能TIMx在CCR2上的预装载寄存器
-
-
-//   TIM_CCxCmd(TIM2,TIM_Channel_4,TIM_CCx_Disable);//关闭TIMx通道1
-  
-//   TIM_Cmd(TIM2, DISABLE);  //先不使能TIMx 
-// }
-
-
-
-
 /*******************************************************************************
 * 函 数 名					: Steps_TIMs_Init
 * 函数功能					: 多个通用定时器初始化
@@ -261,36 +223,15 @@ void Steps_Config(void)
  * 输    入					:	无
  * 输    出					: 无
  *******************************************************************************/
-//  void Step_1_run(int f)
-//  {	
-//  	int arr;
-//  	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
-//  	TIM_SetAutoreload(TIM2, arr);
-//  	TIM_SetCompare4(TIM2, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
-
-//  	TIM_CCxCmd(TIM2,TIM_Channel_4,TIM_CCx_Enable);//开启TIMx通道
-
-//  	TIM_Cmd(TIM2, ENABLE);//必须放在最后使能
-//  }
-
-
-// void Step_2_run(int f)
-// {	
-// 	int arr;
-// 	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
-// 	TIM_SetAutoreload(TIM3, arr);
-// 	TIM_SetCompare1(TIM3, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
-
-// 	TIM_CCxCmd(TIM3,TIM_Channel_1,TIM_CCx_Enable);//开启TIMx通道
-
-// 	TIM_Cmd(TIM3, ENABLE);//必须放在最后使能
-// }
 void Step_x_run(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
 {
 	int arr;
 	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
 	TIM_SetAutoreload(STEP_x_TIMx, arr);
-	TIM_SetCompare1(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
+	if 			( STEP_x_TIM_CHANNEL == TIM_Channel_1 )	{TIM_SetCompare1(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_2 )	{TIM_SetCompare2(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_3 )	{TIM_SetCompare3(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}	
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_4 )	{TIM_SetCompare4(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
 
 	TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Enable);//开启TIMx通道
 
@@ -316,45 +257,6 @@ void Step_3_run(int f)
 // {	
 // 	Step_x_run(f, STEP_4_TIMx, STEP_4_TIM_CHANNEL);
 // }
-
-// void Step_2_run(int f)
-// {	
-// 	int arr;
-// 	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
-// 	TIM_SetAutoreload(STEP_2_TIMx, arr);
-// 	TIM_SetCompare1(STEP_2_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
-
-// 	TIM_CCxCmd(STEP_2_TIMx,STEP_2_TIM_CHANNEL,TIM_CCx_Enable);//开启TIMx通道
-
-// 	TIM_Cmd(STEP_2_TIMx, ENABLE);//必须放在最后使能
-// }
-
-
-// void Step_3_run(int f)
-// {	
-// 	int arr;
-// 	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
-// 	TIM_SetAutoreload(STEP_3_TIMx, arr);
-// 	TIM_SetCompare1(STEP_3_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
-
-// 	TIM_CCxCmd(STEP_3_TIMx,STEP_3_TIM_CHANNEL,TIM_CCx_Enable);//开启TIMx通道
-
-// 	TIM_Cmd(STEP_3_TIMx, ENABLE);//必须放在最后使能
-// }
-
-
-// void Step_4_run(int f)
-// {	
-// 	int arr;
-// 	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
-// 	TIM_SetAutoreload(STEP_4_TIMx, arr);
-// 	TIM_SetCompare1(STEP_4_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));
-
-// 	TIM_CCxCmd(STEP_4_TIMx,STEP_4_TIM_CHANNEL,TIM_CCx_Enable);//开启TIMx通道
-
-// 	TIM_Cmd(STEP_4_TIMx, ENABLE);//必须放在最后使能
-// }
-
 
 
 // /*******************************************************************************
@@ -394,36 +296,6 @@ void Step_3_stop(void)
 // 	Step_x_stop(STEP_4_TIMx, STEP_4_TIM_CHANNEL);
 // }
 
-
-// void Step_2_stop(void)
-// {
-// 	if (STEP_2_TIM_CHANNEL == TIM_Channel_1)  {TIM_SetCompare1(STEP_2_TIMx, 0);}
-//   if (STEP_2_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_2_TIMx, 0);}
-//   if (STEP_2_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_2_TIMx, 0);}
-//   if (STEP_2_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_2_TIMx, 0);}
-// 	TIM_CCxCmd(STEP_2_TIMx,STEP_2_TIM_CHANNEL,TIM_CCx_Enable);//关闭TIMx通道
-// 	TIM_Cmd(STEP_2_TIMx, DISABLE);
-// }
-
-// void Step_3_stop(void)
-// {	
-// 	if (STEP_3_TIM_CHANNEL == TIM_Channel_1)  {TIM_SetCompare1(STEP_3_TIMx, 0);}
-//   if (STEP_3_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_3_TIMx, 0);}
-//   if (STEP_3_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_3_TIMx, 0);}
-//   if (STEP_3_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_3_TIMx, 0);}
-// 	TIM_CCxCmd(STEP_3_TIMx,STEP_3_TIM_CHANNEL,TIM_CCx_Enable);//关闭TIMx通道
-// 	TIM_Cmd(STEP_3_TIMx, DISABLE);
-// }
-
-// void Step_4_stop(void)
-// {
-// 	if (STEP_4_TIM_CHANNEL == TIM_Channel_1)  {TIM_SetCompare1(STEP_4_TIMx, 0);}
-//   if (STEP_4_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_4_TIMx, 0);}
-//   if (STEP_4_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_4_TIMx, 0);}
-//   if (STEP_4_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_4_TIMx, 0);}
-// 	TIM_CCxCmd(STEP_4_TIMx,STEP_4_TIM_CHANNEL,TIM_CCx_Enable);//关闭TIMx通道
-// 	TIM_Cmd(STEP_4_TIMx, DISABLE);
-// }
 
 
 /*******************************************************************************
