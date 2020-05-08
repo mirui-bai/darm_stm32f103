@@ -28,7 +28,7 @@ int main(void)
 	
 	/* arr=999 ,不分频psc=71  PWM频率=(72000000 / (psc + 1)) / (arr + 1) */
 	Steps_Config();
-	Steps_run(STEP_INIT_F);
+//	Steps_run(STEP_INIT_F,STEP_INIT_F,STEP_INIT_F,STEP_INIT_F);
 
   
   /* 初始化RGB彩灯 */
@@ -40,6 +40,8 @@ int main(void)
   /* 打印指令输入提示信息 */
   Show_Message();
 	f = STEP_INIT_F;
+	printf("%d", STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC));
+  Steps_run(f);
   while(1)
 	{	
     /* 获取字符指令 */

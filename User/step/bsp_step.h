@@ -3,10 +3,24 @@
 
 #include "stm32f10x.h"
 
-/********************定时器通道**************************/
+/********************定时器选择通道选择************************/
 
-#define 	STEP_TIMx  								TIM4
-#define		STEP_TIM_CLK							RCC_APB1Periph_TIM4
+#define 	STEP_1_TIMx  								TIM2
+#define		STEP_1_TIM_CLK							RCC_APB1Periph_TIM2
+
+#define 	STEP_2_TIMx  								TIM3
+#define		STEP_2_TIM_CLK							RCC_APB1Periph_TIM3
+
+#define 	STEP_3_TIMx  								TIM4
+#define		STEP_3_TIM_CLK							RCC_APB1Periph_TIM4
+
+#define		STEP_1_TIM_CHANNEL					TIM_Channel_4
+#define		STEP_2_TIM_CHANNEL					TIM_Channel_1
+#define		STEP_3_TIM_CHANNEL					TIM_Channel_1
+
+// #define 		STEP_4_TIMx  								TIM5
+// #define		STEP_4_TIM_CLK							RCC_APB1Periph_TIM5
+// #define		STEP_4_TIM_CHANNEL					TIM_Channel_1
 
 
 /******************STEP 初始参数 **********************/
@@ -18,65 +32,81 @@
 #define		STEP_TIM_ARR(f,psc)						(int)((SystemCoreClock / ((psc + 1) * f)) -1)
 #define		STEP_TIM_CCR(duty_cycle,arr)	(int)(duty_cycle*(arr + 1)/100)
 
+
 ////使能脚 和led 绿灯共用GPIO引脚，方便观察，后期改掉
 //#define		STEP_EN_GPIO_PORT					GPIOB
 //#define		STEP_EN_GPIO_PIN					GPIO_Pin_0
 
 
-
 //引脚重映射
-#define   STEP_GPIO_REMAP_FUN() 		GPIO_PinRemapConfig(GPIO_Remap_TIM4, ENABLE);
+//#define   STEP_GPIO_REMAP_FUN() 		GPIO_PinRemapConfig(GPIO_Remap_TIM4, ENABLE);
 
 /******************* STEP 1 ****************************/
 
-#define STEP1_STEP_GPIO_PORT				GPIOB
-#define STEP1_STEP_GPIO_CLK					(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
-#define STEP1_STEP_GPIO_PIN					GPIO_Pin_6
+#define STEP_1_STEP_GPIO_PORT				GPIOA
+#define STEP_1_STEP_GPIO_CLK				(RCC_APB2Periph_GPIOA|RCC_APB2Periph_AFIO)
+#define STEP_1_STEP_GPIO_PIN				GPIO_Pin_3
 
-#define STEP1_DIR_GPIO_PORT					GPIOB
-#define STEP1_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
-#define STEP1_DIR_GPIO_PIN					GPIO_Pin_5
+#define STEP_1_DIR_GPIO_PORT				GPIOC
+#define STEP_1_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
+#define STEP_1_DIR_GPIO_PIN					GPIO_Pin_8
 
 
 /******************* STEP 2 ****************************/
 
-#define STEP2_STEP_GPIO_PORT				GPIOB
-#define STEP2_STEP_GPIO_CLK					(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
-#define STEP2_STEP_GPIO_PIN					GPIO_Pin_7
+#define STEP_2_STEP_GPIO_PORT				GPIOA
+#define STEP_2_STEP_GPIO_CLK				(RCC_APB2Periph_GPIOA|RCC_APB2Periph_AFIO)
+#define STEP_2_STEP_GPIO_PIN				GPIO_Pin_6
 
-#define STEP2_DIR_GPIO_PORT					GPIOA
-#define STEP2_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOA|RCC_APB2Periph_AFIO)
-#define STEP2_DIR_GPIO_PIN					GPIO_Pin_8
+#define STEP_2_DIR_GPIO_PORT				GPIOC
+#define STEP_2_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
+#define STEP_2_DIR_GPIO_PIN					GPIO_Pin_9
 
 
 /******************* STEP 3 ****************************/
 
-#define STEP3_STEP_GPIO_PORT				GPIOB
-#define STEP3_STEP_GPIO_CLK					(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
-#define STEP3_STEP_GPIO_PIN					GPIO_Pin_8
+#define STEP_3_STEP_GPIO_PORT				GPIOB
+#define STEP_3_STEP_GPIO_CLK				(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
+#define STEP_3_STEP_GPIO_PIN				GPIO_Pin_6
 
-#define STEP3_DIR_GPIO_PORT					GPIOC
-#define STEP3_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
-#define STEP3_DIR_GPIO_PIN					GPIO_Pin_6
+#define STEP_3_DIR_GPIO_PORT				GPIOC
+#define STEP_3_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
+#define STEP_3_DIR_GPIO_PIN					GPIO_Pin_10
 
 
 /******************* STEP 4 ****************************/
 
-#define STEP4_STEP_GPIO_PORT				GPIOB
-#define STEP4_STEP_GPIO_CLK					(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
-#define STEP4_STEP_GPIO_PIN					GPIO_Pin_9
+// #define STEP_4_STEP_GPIO_PORT			GPIOB
+// #define STEP_4_STEP_GPIO_CLK				(RCC_APB2Periph_GPIOB|RCC_APB2Periph_AFIO)
+// #define STEP_4_STEP_GPIO_PIN				GPIO_Pin_9
 
 
-#define STEP4_DIR_GPIO_PORT					GPIOC
-#define STEP4_DIR_GPIO_CLK					(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
-#define STEP4_DIR_GPIO_PIN					GPIO_Pin_7
+// #define STEP_4_DIR_GPIO_PORT				GPIOC
+// #define STEP_4_DIR_GPIO_CLK				(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
+// #define STEP_4_DIR_GPIO_PIN				GPIO_Pin_11
 
 
 void Steps_DIR_Init(void);
 void Steps_STPE_Init(void);
-void Steps_TIM_Init(void);
+void Step_x_TIMx_Init(uint32_t STEP_x_TIM_CLK,TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void Steps_TIMs_Init(void);
+
+// void TIM2_Init(void);
+//void TIM3_Init(void);
+
 void Steps_Config(void);
+void Step_x_run(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void Step_1_run(int f);
+void Step_2_run(int f);
+void Step_3_run(int f);
+// void Step_4_run(int f);
 void Steps_run(int f);
+
+void Step_x_stop(TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void Step_1_stop(void);
+void Step_2_stop(void);
+void Step_3_stop(void);
+// void Step_4_stop(void);
 void Steps_stop(void);
 
 
