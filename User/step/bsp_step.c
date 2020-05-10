@@ -139,52 +139,52 @@ void Steps_STPE_Init(void)
  void Step_x_TIMx_Init(uint32_t STEP_x_TIM_CLK,TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
  {
  	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-   TIM_OCInitTypeDef  TIM_OCInitStructure;
+ 	TIM_OCInitTypeDef  TIM_OCInitStructure;
 
-   RCC_APB1PeriphClockCmd(STEP_x_TIM_CLK, ENABLE);    //使能定时器4时钟
+  RCC_APB1PeriphClockCmd(STEP_x_TIM_CLK, ENABLE);    //使能定时器4时钟
 
   	//初始化TIMx
-   TIM_TimeBaseStructure.TIM_Period = STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC); //设置在下一个更新事件装入活动的自动重装载寄存器周期的值
-   TIM_TimeBaseStructure.TIM_Prescaler = STEP_INIT_PSC; //设置用来作为TIMx时钟频率除数的预分频值 
-   TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
-   TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
-   TIM_TimeBaseInit(STEP_x_TIMx, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
+  TIM_TimeBaseStructure.TIM_Period = STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC); //设置在下一个更新事件装入活动的自动重装载寄存器周期的值
+  TIM_TimeBaseStructure.TIM_Prescaler = STEP_INIT_PSC; //设置用来作为TIMx时钟频率除数的预分频值 
+  TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;  //TIM向上计数模式
+  TIM_TimeBaseInit(STEP_x_TIMx, &TIM_TimeBaseStructure); //根据TIM_TimeBaseInitStruct中指定的参数初始化TIMx的时间基数单位
 	
 
    //初始化TIMx Channel_x PWM模式     
-   TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //选择定时器模式:TIM脉冲宽度调制模式1
+  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1; //选择定时器模式:TIM脉冲宽度调制模式1
    //TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable; //比较输出使能
-   TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable; //关闭比较输出使能
-   TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //输出极性:TIM输出比较极性高
-   //TIM_OCInitStructure.TIM_Pulse =(STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC) + 1)*STEP_DUTY_CYCLE/100;
+  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Disable; //关闭比较输出使能
+  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High; //输出极性:TIM输出比较极性高
+  //TIM_OCInitStructure.TIM_Pulse =(STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC) + 1)*STEP_DUTY_CYCLE/100;
 
   
-   if (STEP_x_TIM_CHANNEL == TIM_Channel_1)  
-   {	
-   	TIM_OC1Init(STEP_x_TIMx, &TIM_OCInitStructure);	//根据T指定的参数初始化外设TIMx OC1;
+  if (STEP_x_TIM_CHANNEL == TIM_Channel_1)  
+  {	
+  	TIM_OC1Init(STEP_x_TIMx, &TIM_OCInitStructure);	//根据T指定的参数初始化外设TIMx OC1;
    		// 这里设置了TIM_Pulse值，设置待装入捕获比较寄存器的脉冲值
  		TIM_OC1PreloadConfig(STEP_x_TIMx, TIM_OCPreload_Enable); //使能TIMx在CCR2上的预装载寄存器
  	}  
    else if (STEP_x_TIM_CHANNEL == TIM_Channel_2)	
-   {
+  {
    	TIM_OC2Init(STEP_x_TIMx, &TIM_OCInitStructure);	
   	TIM_OC2PreloadConfig(STEP_x_TIMx, TIM_OCPreload_Enable); 
    }
-   else if (STEP_x_TIM_CHANNEL == TIM_Channel_3) 
-   {
+  else if (STEP_x_TIM_CHANNEL == TIM_Channel_3) 
+  {
    	TIM_OC3Init(STEP_x_TIMx, &TIM_OCInitStructure);	
    	TIM_OC3PreloadConfig(STEP_x_TIMx, TIM_OCPreload_Enable); 
-   }
-   else if (STEP_x_TIM_CHANNEL == TIM_Channel_4)	
-   {	
+  }
+  else if (STEP_x_TIM_CHANNEL == TIM_Channel_4)	
+  {	
    	TIM_OC4Init(STEP_x_TIMx, &TIM_OCInitStructure);
    	TIM_OC4PreloadConfig(STEP_x_TIMx, TIM_OCPreload_Enable); 
-   }
+  }
 
-   TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Disable);//关闭TIMx通道1
+  TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Disable);//关闭TIMx通道1
   
-   TIM_Cmd(STEP_x_TIMx, DISABLE);  //先不使能TIMx 
- }
+  TIM_Cmd(STEP_x_TIMx, DISABLE);  //先不使能TIMx 
+}
 
 
 /*******************************************************************************
@@ -307,8 +307,8 @@ void Step_3_stop(void)
 void Steps_run(int f)
 {	
 	Step_1_run(f);
-	Step_2_run(f * 2);
-	Step_3_run(f * 3);
+	Step_2_run(f);
+	Step_3_run(f);
 	// Step_4_run(f);
 }
 

@@ -91,10 +91,6 @@ void Steps_STPE_Init(void);
 void Step_x_TIMx_Init(uint32_t STEP_x_TIM_CLK,TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
 void Steps_TIMs_Init(void);
 
-// void TIM2_Init(void);
-//void TIM3_Init(void);
-void Step_1_TIMx_Init(void);
-
 void Steps_Config(void);
 void Step_x_run(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
 void Step_1_run(int f);
