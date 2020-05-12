@@ -13,7 +13,7 @@ void Delay(uint32_t count)
 }
 
 
-#define delay1 Delay(0x0F)
+#define delay1 Delay(0xFF)
 
 int main(void)
 {
@@ -40,10 +40,12 @@ int main(void)
   /* 打印指令输入提示信息 */
   Show_Message();
 	f = STEP_INIT_F;
+
 	printf("%d", STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC));
   Steps_run(f);
+
   while(1)
-	{	
+	{
     /* 获取字符指令 */
     ch=getchar();
     printf("接收到字符：%c\n",ch);

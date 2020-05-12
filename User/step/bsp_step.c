@@ -16,7 +16,23 @@
 
 #include "bsp_step.h"
 
-//#include "delay.h"
+
+typedef int bool;
+
+typedef struct {
+	uint16_t	counter_xyz;
+	uint16_t	n_step;			//步数
+	uint16_t	step_speed;		//频率
+	bool	step_dir;
+
+	uint16_t	timer_psc
+	uint16_t	step_counts;
+} stepper_t;
+
+static stepper_t stepper_1_t;
+static stepper_t stepper_2_t;
+static stepper_t stepper_3_t;
+
 
 
 /*******************************************************************************
@@ -143,7 +159,6 @@ void Steps_STPE_Init(void)
 
   RCC_APB1PeriphClockCmd(STEP_x_TIM_CLK, ENABLE);    //使能定时器4时钟
 
-  	//初始化TIMx
   TIM_TimeBaseStructure.TIM_Period = STEP_TIM_ARR(STEP_INIT_F,STEP_INIT_PSC); //设置在下一个更新事件装入活动的自动重装载寄存器周期的值
   TIM_TimeBaseStructure.TIM_Prescaler = STEP_INIT_PSC; //设置用来作为TIMx时钟频率除数的预分频值 
   TIM_TimeBaseStructure.TIM_ClockDivision = 0; //设置时钟分割:TDTS = Tck_tim
@@ -188,6 +203,57 @@ void Steps_STPE_Init(void)
 
 
 /*******************************************************************************
+* 函 数 名					: Step_x_TIMER_Init
+* 函数功能					: 计时定时器初始化
+* 输    入					:	可输入（TIM 2~7）初始化 ，定时器用来计时，溢出产生中断关闭PWM(TIM234)
+* 输    出					: 无
+*******************************************************************************/
+void Step_x_TIMER_Init(TIM_TypeDef* TIMER ,u16 Period, u16 Prescaler, u8 PP)
+{
+  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	NVIC_InitTypeDef NVIC_InitStructure;
+
+	RCC_APB1PeriphClockCmd(TIMER_CLK, ENABLE);
+
+	TIM_TimeBaseStructure.TIM_Period = Period - 1;
+	TIM_TimeBaseStructure.TIM_Prescaler = Prescaler - 1;
+
+	if (TIMER != TIM6 |TIMER !=TIM7 )
+	{
+		TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;}
+	
+	TIM_TimeBaseInit(TIMER, &TIM_TimeBaseStructure);
+
+	TIM_ClearITPendingBit(TIMER, TIM_IT_Update);
+	TIM_ITConfig(TIMER, TIM_IT_Update, ENABLE);
+	TIM_Cmd(TIMER, ENABLE);
+
+	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
+	if (TIMER == TIM2) { NVIC_InitStructure.NVIC_IRQChannel = TIM2_IRQn; }
+	else if (TIMER == TIM3) { NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn; }
+	else if (TIMER == TIM4) { NVIC_InitStructure.NVIC_IRQChannel = TIM4_IRQn; }
+	else if (TIMER == TIM5) { NVIC_InitStructure.NVIC_IRQChannel = TIM5_IRQn; }
+	else if (TIMER == TIM6) { NVIC_InitStructure.NVIC_IRQChannel = TIM6_IRQn; }
+	else if (TIMER == TIM7) { NVIC_InitStructure.NVIC_IRQChannel = TIM7_IRQn; }
+
+	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = PP;
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure);
+
+	
+	NVIC_DisableIRQ(TIM2_IRQn);
+	if (TIMER == TIM2) { NVIC_DisableIRQ(TIM2_IRQn); }
+	else if (TIMER == TIM3) { NVIC_DisableIRQ(TIM3_IRQn); }
+	else if (TIMER == TIM4) { NVIC_DisableIRQ(TIM4_IRQn); }
+	else if (TIMER == TIM5) { NVIC_DisableIRQ(TIM5_IRQn); }
+	else if (TIMER == TIM6) { NVIC_DisableIRQ(TIM6_IRQn); }
+	else if (TIMER == TIM7) { NVIC_DisableIRQ(TIM7_IRQn); }
+}
+
+
+/*******************************************************************************
 * 函 数 名					: Steps_TIMs_Init
 * 函数功能					: 多个通用定时器初始化
 * 输    入					:	无
@@ -198,7 +264,9 @@ void Steps_TIMs_Init(void)
 	Step_x_TIMx_Init(STEP_1_TIM_CLK, STEP_1_TIMx, STEP_1_TIM_CHANNEL);
 	Step_x_TIMx_Init(STEP_2_TIM_CLK, STEP_2_TIMx, STEP_2_TIM_CHANNEL);
 	Step_x_TIMx_Init(STEP_3_TIM_CLK, STEP_3_TIMx, STEP_3_TIM_CHANNEL);
-
+	Step_x_TIMER_Init(TIM5, 1, 1, 1);
+	Step_x_TIMER_Init(TIM6, 1, 1, 1);
+	Step_x_TIMER_Init(TIM7, 1, 1, 1);
 }
 
 
@@ -213,6 +281,76 @@ void Steps_Config(void)
 	Steps_DIR_Init();
 	Steps_STPE_Init();
 	Steps_TIMs_Init();
+}
+
+/*******************************************************************************
+* 函 数 名					: TIM5_IRQHandler
+* 函数功能					: 步进电机初始化（端口，时钟等等）
+* 输    入					:	无
+* 输    出					: 无
+*******************************************************************************/
+void TIM5_IRQHandler(void)
+{
+	if ((TIM5->SR & 0x0001) != 0)                 // 检查中断标志
+	{
+		TIM5->SR &= ~(1<<0);                        // 中断标志复位
+		TIM5->CNT = 0;															//计数复位
+		NVIC_DisableIRQ(TIM5_IRQn);
+    // 关闭PWM输出
+    Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+		// GPIO_Write(STEP_PORT, (GPIO_ReadOutputData(STEP_PORT) & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK));
+	}
+}
+
+void TIM6_IRQHandler(void)
+{
+	if ((TIM6->SR & 0x0001) != 0)                 // 检查中断标志
+	{
+		TIM6->SR &= ~(1<<0);                        // 中断标志复位
+		TIM6->CNT = 0;															//计数复位
+		NVIC_DisableIRQ(TIM6_IRQn);
+    // 关闭PWM输出
+    Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+	}
+}
+
+void TIM7_IRQHandler(void)
+{
+	if ((TIM7->SR & 0x0001) != 0)                 // 检查中断标志
+	{
+		TIM7->SR &= ~(1<<0);                        // 中断标志复位
+		TIM7->CNT = 0;															//计数复位
+		NVIC_DisableIRQ(TIM7_IRQn);
+    // 关闭PWM输出
+    Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+	}
+}
+
+
+
+ /*******************************************************************************
+ * 函 数 名					: Step_go
+ * 函数功能					: 步进电机
+ * 输    入					:	无
+ * 输    出					: 无
+ *******************************************************************************/
+void Step_go(void)
+{
+
+	if (stepper_1_t.step_dir == FORWARD) STEP_1_FORWARD;
+	else STEP_1_BACK;
+
+
+
+}
+
+
+
+
+
+void Step_PWM_SET()
+{
+
 
 }
 
@@ -268,10 +406,10 @@ void Step_3_run(int f)
 void Step_x_stop(TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
 {
 
-	if 			(STEP_x_TIM_CHANNEL == TIM_Channel_1) {TIM_SetCompare1(STEP_x_TIMx, 0);}
-  else if (STEP_x_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_x_TIMx, 0);}
-  else if (STEP_x_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_x_TIMx, 0);}
-  else if (STEP_x_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_x_TIMx, 0);}
+	// if 			(STEP_x_TIM_CHANNEL == TIM_Channel_1) {TIM_SetCompare1(STEP_x_TIMx, 0);}
+ //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_x_TIMx, 0);}
+ //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_x_TIMx, 0);}
+ //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_x_TIMx, 0);}
 	TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Enable);//关闭TIMx通道
 	TIM_Cmd(STEP_x_TIMx, DISABLE);
 }

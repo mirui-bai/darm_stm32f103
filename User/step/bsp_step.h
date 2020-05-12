@@ -14,6 +14,9 @@
 #define 	STEP_3_TIMx  								TIM4
 #define		STEP_3_TIM_CLK							RCC_APB1Periph_TIM4
 
+// TIM( 5 、 6 、 7)用来计时
+#define		TIMER_CLK										(RCC_APB1Periph_TIM5 | RCC_APB1Periph_TIM6 | RCC_APB1Periph_TIM7 )
+
 #define		STEP_1_TIM_CHANNEL					TIM_Channel_4
 #define		STEP_2_TIM_CHANNEL					TIM_Channel_1
 #define		STEP_3_TIM_CHANNEL					TIM_Channel_1
@@ -31,6 +34,12 @@
 
 #define		STEP_TIM_ARR(f,psc)						(int)((SystemCoreClock / ((psc + 1) * f)) -1)
 #define		STEP_TIM_CCR(duty_cycle,arr)	(int)(duty_cycle*(arr + 1)/100)
+
+#define		FORWARD					1
+#define		BACK						0
+
+#define		STEP_1_FORWARD						GPIO_SetBits(STEP_1_DIR_GPIO_PORT,STEP_1_DIR_GPIO_PIN); 
+#define		STEP_1_BACK								GPIO_ResetBits(STEP_1_DIR_GPIO_PORT,STEP_1_DIR_GPIO_PIN);
 
 
 ////使能脚 和led 绿灯共用GPIO引脚，方便观察，后期改掉
@@ -89,7 +98,12 @@
 void Steps_DIR_Init(void);
 void Steps_STPE_Init(void);
 void Step_x_TIMx_Init(uint32_t STEP_x_TIM_CLK,TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void Step_x_TIMER_Init(TIM_TypeDef* TIMER ,u16 Period, u16 Prescaler, u8 PP);
 void Steps_TIMs_Init(void);
+
+void TIM5_IRQHandler(void);
+void TIM6_IRQHandler(void);
+void TIM7_IRQHandler(void);
 
 void Steps_Config(void);
 void Step_x_run(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);

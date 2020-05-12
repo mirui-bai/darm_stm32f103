@@ -25,6 +25,7 @@
 #include "stm32f10x_it.h"
 #include "bsp_led.h"
 #include "bsp_exti.h"
+#include "bsp_step.h"
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
@@ -165,6 +166,7 @@ void KEY1_IRQHandler(void)
 	{
 		// LED1 取反		
 		LED_G_TOGGLE;
+    // Step_1_run(100);
     //清除中断标志位
 		EXTI_ClearITPendingBit(KEY1_INT_EXTI_LINE);     
 	}  
@@ -177,6 +179,7 @@ void KEY2_IRQHandler(void)
 	{
 		// LED2 取反		
 		LED_B_TOGGLE;
+    Step_1_stop();
     //清除中断标志位
 		EXTI_ClearITPendingBit(KEY2_INT_EXTI_LINE);     
 	}  
