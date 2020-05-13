@@ -17,31 +17,13 @@
 #include "bsp_step.h"
 
 
-typedef int bool;
-
-typedef struct {
-	uint16_t	counter_xyz;
-	uint16_t	n_step;			//步数
-	uint16_t	step_speed;		//频率
-	bool	step_dir;
-
-	uint16_t	timer_psc
-	uint16_t	step_counts;
-} stepper_t;
-
-static stepper_t stepper_1_t;
-static stepper_t stepper_2_t;
-static stepper_t stepper_3_t;
-
-
-
 /*******************************************************************************
 * 函 数 名					: Steps_DIR_Init
 * 函数功能					: 步进DIR端口初始化
 * 输    入					: 
 * 输    出					: 无
 *******************************************************************************/
-void Steps_DIR_Init(void)
+void GPIO_DIR_Init(void)
 {
 	GPIO_InitTypeDef  GPIO_InitStructure;
 
@@ -103,6 +85,17 @@ void Steps_DIR_Init(void)
 
 //}
 
+/*******************************************************************************
+* 函 数 名					: GPIO_LIMIT_Init
+* 函数功能					: 限位开关端口初始化
+* 输    入					: 无
+* 输    出					: 无
+*******************************************************************************/
+void GPIO_LIMIT_Init(void)
+{
+
+}
+
 
 /*******************************************************************************
 * 函 数 名					: Steps_STPE_Init
@@ -110,7 +103,7 @@ void Steps_DIR_Init(void)
 * 输    入					: 无
 * 输    出					: 无
 *******************************************************************************/
-void Steps_STPE_Init(void)
+void GPIO_STPE_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStructure;
 
@@ -270,6 +263,16 @@ void Steps_TIMs_Init(void)
 }
 
 
+void Steps_Init(void)
+{
+	stepper_1_t.step_speed = 100;
+	stepper_2_t.step_speed = 100;
+	stepper_3_t.step_speed = 100;
+	stepper_1_t.step_dir = 1;
+	stepper_2_t.step_dir = 1;
+	stepper_3_t.step_dir = 1;
+}
+
 /*******************************************************************************
 * 函 数 名					: Steps_Config
 * 函数功能					: 步进电机初始化（端口，时钟等等）
@@ -278,9 +281,10 @@ void Steps_TIMs_Init(void)
 *******************************************************************************/
 void Steps_Config(void)
 {
-	Steps_DIR_Init();
-	Steps_STPE_Init();
+	GPIO_DIR_Init();
+	GPIO_STPE_Init();
 	Steps_TIMs_Init();
+	Steps_Init();
 }
 
 /*******************************************************************************
@@ -298,7 +302,7 @@ void TIM5_IRQHandler(void)
 		NVIC_DisableIRQ(TIM5_IRQn);
     // 关闭PWM输出
     Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
-		// GPIO_Write(STEP_PORT, (GPIO_ReadOutputData(STEP_PORT) & ~STEP_MASK) | (step_port_invert_mask & STEP_MASK));
+		step_busy_1 = false;
 	}
 }
 
@@ -311,6 +315,7 @@ void TIM6_IRQHandler(void)
 		NVIC_DisableIRQ(TIM6_IRQn);
     // 关闭PWM输出
     Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+		step_busy_2 = false;
 	}
 }
 
@@ -323,6 +328,7 @@ void TIM7_IRQHandler(void)
 		NVIC_DisableIRQ(TIM7_IRQn);
     // 关闭PWM输出
     Step_x_stop(STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+    step_busy_3 = false;
 	}
 }
 
@@ -330,28 +336,81 @@ void TIM7_IRQHandler(void)
 
  /*******************************************************************************
  * 函 数 名					: Step_go
- * 函数功能					: 步进电机
+ * 函数功能					: 步进电机前进
  * 输    入					:	无
  * 输    出					: 无
  *******************************************************************************/
 void Step_go(void)
 {
+	if (step_busy_1) { return;}
+	step_busy_1 = true;
+	if (stepper_1_t.step_dir == FORWARD) { STEP_1_FORWARD; }
+	else { STEP_1_BACK; }
+	Step_PWM_SET(stepper_1_t.step_speed, STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+	CalculateSet_Delay_TIME(stepper_1_t.step_speed, stepper_1_t.n_step, TIM5 );
+	
+  TIM5->EGR = TIM_PSCReloadMode_Immediate;
+	Step_PWM_OUT( STEP_1_TIMx, STEP_1_TIM_CHANNEL);
+  TIM_ClearITPendingBit(TIM5, TIM_IT_Update);
+  stepper_1_t.use_status = true;
+}
 
-	if (stepper_1_t.step_dir == FORWARD) STEP_1_FORWARD;
-	else STEP_1_BACK;
-
-
+/*******************************************************************************
+* 函 数 名					: Step_PWM_SET
+* 函数功能					: 步进PWM输出参数设置
+* 输    入					: 无
+* 输    出					: 无
+*******************************************************************************/
+void Step_PWM_SET(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
+{
+	int arr;
+	arr =	STEP_TIM_ARR(f,STEP_INIT_PSC);
+	TIM_SetAutoreload(STEP_x_TIMx, arr);
+	if 			( STEP_x_TIM_CHANNEL == TIM_Channel_1 )	{TIM_SetCompare1(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_2 )	{TIM_SetCompare2(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_3 )	{TIM_SetCompare3(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}	
+	else if ( STEP_x_TIM_CHANNEL == TIM_Channel_4 )	{TIM_SetCompare4(STEP_x_TIMx, STEP_TIM_CCR(STEP_DUTY_CYCLE,arr));}
 
 }
 
-
-
-
-
-void Step_PWM_SET()
+/*******************************************************************************
+* 函 数 名					: Step_PWM_OUT
+* 函数功能					: 步进PWM端口输出PWM
+* 输    入					: 无
+* 输    出					: 无
+*******************************************************************************/
+void Step_PWM_OUT( TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
 {
+	TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Enable);//开启TIMx通道
+	TIM_Cmd(STEP_x_TIMx, ENABLE);//必须放在最后使能
+}
 
-
+/*******************************************************************************
+* 函 数 名					: CalculateSet_Delay_TIME
+* 函数功能					: 计时，溢出关闭PWM， 用来输出指定数量脉冲
+* 输    入					: 无
+* 输    出					: 无
+*******************************************************************************/
+void CalculateSet_Delay_TIME(int f, uint16_t n_step, TIM_TypeDef* TIMER_TIMx )
+{
+	if (n_step > 100) return;
+	// 根据频率大小设置定时器预分频,并计算设置定时时间 相关公式ARR = (sys_clk * n_step) / (psc * f)
+	if (f > 10000) 
+	{	
+		TIMER_TIMx->PSC = 71;
+		
+		TIMER_TIMx->ARR	=(int)((1000000 * n_step)/f);
+	}	
+	else if (f >1000)	
+	{
+		TIMER_TIMx->PSC = 719;
+		TIMER_TIMx->ARR	=(int)((100000 * n_step)/f);
+	}
+	else if (f >100)	
+	{
+		TIMER_TIMx->PSC = 3599;
+		TIMER_TIMx->ARR	=(int)((20000 * n_step)/f);
+	}
 }
 
 
@@ -405,11 +464,6 @@ void Step_3_run(int f)
 // *******************************************************************************/
 void Step_x_stop(TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL)
 {
-
-	// if 			(STEP_x_TIM_CHANNEL == TIM_Channel_1) {TIM_SetCompare1(STEP_x_TIMx, 0);}
- //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_2)	{TIM_SetCompare2(STEP_x_TIMx, 0);}
- //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_3)	{TIM_SetCompare3(STEP_x_TIMx, 0);}
- //  else if (STEP_x_TIM_CHANNEL == TIM_Channel_4)	{TIM_SetCompare4(STEP_x_TIMx, 0);}
 	TIM_CCxCmd(STEP_x_TIMx,STEP_x_TIM_CHANNEL,TIM_CCx_Enable);//关闭TIMx通道
 	TIM_Cmd(STEP_x_TIMx, DISABLE);
 }

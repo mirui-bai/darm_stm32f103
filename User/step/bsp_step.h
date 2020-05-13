@@ -3,6 +3,13 @@
 
 #include "stm32f10x.h"
 
+#define		true		1
+#define		false		0
+
+#define		STEP_1	1
+#define		STEP_2	2
+#define		STEP_3	3
+
 /********************定时器选择通道选择************************/
 
 #define 	STEP_1_TIMx  								TIM2
@@ -94,9 +101,52 @@
 // #define STEP_4_DIR_GPIO_CLK				(RCC_APB2Periph_GPIOC|RCC_APB2Periph_AFIO)
 // #define STEP_4_DIR_GPIO_PIN				GPIO_Pin_11
 
+//typedef struct {
+//	TIM_TypeDef* PWM_TIMx;
+//	uint16_t	PWM_GPIO_PIN;
+//	uint16_t PWM_CHANNEL;
+//	uint16_t	DIR_GPIO_PIN;
+//	TIM_TypeDef* TIMER_TIMx;
+//} STEP_CONFIGS;
 
-void Steps_DIR_Init(void);
-void Steps_STPE_Init(void);
+//STEP_CONFIGS STEP_1_CON;
+//STEP_CONFIGS STEP_2_CON;
+//STEP_CONFIGS STEP_3_CON;
+
+
+
+typedef int bool;
+
+typedef struct {
+	uint16_t	counter_xyz;
+	uint16_t	n_step;			//步数
+	uint16_t	step_speed;		//频率
+	uint8_t	step_dir;
+	uint8_t	use_status;	//使用过置一
+
+	uint16_t	timer_psc;
+	uint16_t	step_counts;
+} stepper_t;
+
+static stepper_t stepper_1_t;
+static stepper_t stepper_2_t;
+static stepper_t stepper_3_t;
+
+
+
+//uint8_t step_busy_1;
+//uint8_t step_busy_2;
+//uint8_t step_busy_3;
+
+extern uint8_t step_busy_1;
+extern uint8_t step_busy_2;
+extern uint8_t step_busy_3;
+
+
+void GPIO_DIR_Init(void);
+void GPIO_STPE_Init(void);
+void GPIO_LIMIT_Init(void);
+
 void Step_x_TIMx_Init(uint32_t STEP_x_TIM_CLK,TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
 void Step_x_TIMER_Init(TIM_TypeDef* TIMER ,u16 Period, u16 Prescaler, u8 PP);
 void Steps_TIMs_Init(void);
@@ -106,6 +156,11 @@ void TIM6_IRQHandler(void);
 void TIM7_IRQHandler(void);
 
 void Steps_Config(void);
+void Step_PWM_SET(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void Step_PWM_OUT( TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
+void CalculateSet_Delay_TIME(int f, uint16_t n_step, TIM_TypeDef* TIMER_TIMx );
+
+void Step_go(void);
 void Step_x_run(int f, TIM_TypeDef* STEP_x_TIMx, uint16_t STEP_x_TIM_CHANNEL);
 void Step_1_run(int f);
 void Step_2_run(int f);

@@ -26,6 +26,9 @@
 #include "bsp_led.h"
 #include "bsp_exti.h"
 #include "bsp_step.h"
+extern uint8_t step_busy_1;
+extern uint8_t step_busy_2;
+extern uint8_t step_busy_3;
 
 /** @addtogroup STM32F10x_StdPeriph_Template
   * @{
